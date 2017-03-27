@@ -114,6 +114,7 @@ class WithingsAuth(object):
 
 class WithingsApi(object):
     URL = 'http://wbsapi.withings.net'
+    URL_v2 = 'http://wbsapi.withings.net/v2'
 
     def __init__(self, credentials):
         self.credentials = credentials
@@ -129,7 +130,11 @@ class WithingsApi(object):
     def request(self, service, action, params=None, method='GET'):
         if params is None:
             params = {}
+        print("%s, %s, %s" %(service, action, params))
+        if (action == 'getactivity' or action == 'sleep'):
+            self.URL = self.URL_v2
         params['action'] = action
+        print('%s/%s %s' % (self.URL, service, params))
         r = self.client.request(method, '%s/%s' % (self.URL, service), params=params)
         response = json.loads(r.content.decode())
         if response['status'] != 0:
@@ -140,8 +145,34 @@ class WithingsApi(object):
         return self.request('user', 'getbyuserid')
 
     def get_measures(self, **kwargs):
+        print(kwargs)
         r = self.request('measure', 'getmeas', kwargs)
+        print("R = %s" % r)
         return WithingsMeasures(r)
+
+    def get_activity(self, **kwargs):
+        # kwargs = {'date' : '2017-03-17'}
+        print('get_activity\n')
+        print(kwargs)
+        r = self.request('measure', 'getactivity', kwargs)
+        # print(type(r))
+        # r = self.request('measure', 'getintradayactivity', kwargs)
+        # r = self.request('measure', 'getworkouts', kwargs)
+        # r = self.request('measure', 'getactivity', kwargs)
+        # print("R = %s" % r)
+        return r
+
+    def get_sleep(self, **kwargs):
+            # kwargs = {'date' : '2017-03-17'}
+        print('get_sleep\n')
+        print(kwargs)
+        r = self.request('sleep', 'get', kwargs)
+            # print(type(r))
+            # r = self.request('measure', 'getintradayactivity', kwargs)
+            # r = self.request('measure', 'getworkouts', kwargs)
+            # r = self.request('measure', 'getactivity', kwargs)
+            # print("R = %s" % r)
+        return r
 
     def subscribe(self, callback_url, comment, appli=1):
         params = {'callbackurl': callback_url,
@@ -201,4 +232,7 @@ class WithingsMeasureGroup(object):
         for m in self.measures:
             if m['type'] == measure_type:
                 return m['value'] * pow(10, m['unit'])
+        return None
+
+    def get_activity(self):
         return None
